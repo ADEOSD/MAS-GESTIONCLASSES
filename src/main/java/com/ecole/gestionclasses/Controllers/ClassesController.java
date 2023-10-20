@@ -5,7 +5,14 @@ import com.ecole.gestionclasses.Entities.Etage;
 import com.ecole.gestionclasses.Services.ClasseService;
 import com.ecole.gestionclasses.Services.EtageService;
 import com.ecole.gestionclasses.Services.SectionService;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.KeycloakSecurityContext;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,10 +35,24 @@ public final class ClassesController  {
 
 
     }
- @PostMapping("/addclasse/{idetage}/{idsection}")
-    public Classe createClasse(@RequestBody Classe classe , @PathVariable ("idetage") int id , @PathVariable("idsection") int idsection ) {
-        return classeService.createClasse(classe,id,idsection);
+    @PostMapping(value="/addclasse/{idetage}/{idsection}")
+
+    public ResponseEntity<Classe> createClasse(@RequestBody Classe classe, KeycloakAuthenticationToken auth,
+                                               @PathVariable("idetage") int id,
+                                               @PathVariable("idsection") int idsection
+                                               ) {
+        KeycloakPrincipal<KeycloakSecurityContext> principal = (KeycloakPrincipal<KeycloakSecurityContext>) auth.getPrincipal();
+        KeycloakSecurityContext context = principal.getKeycloakSecurityContext();
+        boolean hasUserRole = context.getToken().getRealmAccess().isUserInRole("user");
+
+        if (hasUserRole) {
+            return new ResponseEntity<>(classeService.createClasse(classe,id,idsection),HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
     }
+
 
  @GetMapping("/getclassebyId/{id}")
  public Classe getClasseById(@PathVariable("id") int id) {
@@ -48,9 +69,21 @@ public final class ClassesController  {
        return classeService.updateClasse(id,updatedClasse);
     }
 
-    @DeleteMapping("/deleteClasse/{id}")
-    public void deleteClasse(@PathVariable("id") int id) {
-        classeService.deleteClasse(id);
+    @DeleteMapping( value="/deleteClasse/{id}" , produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<String> deleteClasse(@PathVariable("id") int id, KeycloakAuthenticationToken auth) {
+        KeycloakPrincipal<KeycloakSecurityContext> principal = (KeycloakPrincipal<KeycloakSecurityContext>) auth.getPrincipal();
+        KeycloakSecurityContext context = principal.getKeycloakSecurityContext();
+        boolean hasAdminRole = context.getToken().getRealmAccess().isUserInRole("admin");
+
+
+        if (hasAdminRole) {
+            classeService.deleteClasse(id);
+            return new ResponseEntity<>("Class deleted successfully", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Access denied", HttpStatus.FORBIDDEN);
+        }
     }
+
 
  }

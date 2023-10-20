@@ -7,6 +7,8 @@ import com.ecole.gestionclasses.Repositories.ClasseRepository;
 import com.ecole.gestionclasses.Repositories.EtageRepository;
 import com.ecole.gestionclasses.Repositories.SectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +23,7 @@ public class ClasseService {
     private EtageRepository etageRepository;
     @Autowired
     private SectionRepository sectionRepository;
-    public Classe createClasse(Classe classe, int etageId , int idsection) {
+    public Classe createClasse(Classe classe,int etageId , int idsection) {
         Etage etage = etageRepository.findById(etageId).orElse(null);
         Section section = sectionRepository.findById(idsection).orElse(null);
 
